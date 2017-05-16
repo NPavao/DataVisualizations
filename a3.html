@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+ 
+<!--JQuery Library-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+ 
+<html lang="en">
+<meta charset="utf-8">
+<head>
+	<title>Assignment 3</title>
+	<style type="text/css">
+		.links line {
+			stroke: #999;
+			stroke-opacity: 0.8;
+		}
+		
+		.nodes circle {
+			stroke: #fff;
+			stroke-width: 1.5px;
+		}
+		
+		.nodes text {
+			pointer-events: none;
+			font: 10px sans-serif;
+		}
+		
+		h1 {
+			font-size 26px;
+		}
+	</style>
+	<!-- Link D3 -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.js"></script>
+	<!-- Link Data -->
+	<script src="https://d3js.org/d3-geo-projection.v1.min.js"></script>
+	<script src="https://d3js.org/topojson.v2.min.js"></script>
+	<script src="https://d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
+</head>
+
+<body>
+	<h1>0. Info</h1>
+	<div id = "info">
+		Student Name: Nicholas Pavao<br>
+		Student ID: 01284583<br>
+		Data Visualization (CIS 468)<br>
+		Assignment 3<br>
+		This assignment is all my own work. I did not copy the code from any other source.<br>
+		I used the jQuery library<br>
+	</div> 
+
+	<h1>1. Top 20 Women's Players (30 Points)</h1>
+	<div id="map-women"></div>
+
+	<h1>2. Top 100 Men's Players (30 Points)</h1>
+	<div id="map-men"></div>
+	
+	<script type = "text/javascript">
+		function createMap(divId, mapData, womensData, mensData, teammateData){
+			
+			//define dimensions for SVG
+			var width = 1000;
+			var height = 450;
+
+			//append the svg to the current div
+			var svg = d3.select(divId)
+				.append("svg")
+				.attr("width", width)
+				.attr("height", height);
+
+			//define color scale - 12 is the default value should the individiual if statements not execute and reassign color scale based on their maxes.
+			var colorScale = d3.scaleSequential(d3.interpolateBlues)
+						  .domain([0,12]);
+			
+			mapData = mapData.features;
+			
+			//define the projection for path based on a equirectangular map. 
+			var projection = d3.geoEquirectangular()
+				.scale(150)
+				.translate([width / 2, height / 2])
+		 
+			//define the path to match the projection.
+			var path = d3.geoPath()
+				.projection(projection);
+			
+			//find the max value for females to create the best visualization
+			var max = 0;
+			//if we are doing the women map
+			if(divId == "#map-women"){
+				var m = new Map();
+				//populate m with 0's for all countries present
+				womensData.forEach(function(d){
+					m.set(d.Country, 0);
+				})
+	
+				//add one to the country every time we come across that country in the top 20
+				var currentCount = 0;
+				womensData.forEach(function(d){
+					currentCount = m.get(d.Country);
+					m.set(d.Country, currentCount + 1);
+					if(currentCount + 1 > max){
+						max = currentCount + 1;
+					}
+				})
+				colorScale = d3.scaleSequential(d3.interpolateBlues)
+						  .domain([0, max]);
+			} 
+			
+			//if we are doing the men map
+			else if(divId == "#map-men"){
+				var m = new Map();
+				//populate m with 0's for all nationalities present
+				mensData.forEach(function(d){
+					m.set(d.Nationality, 0);
+				})
+
+				//add one to the nationality every time we come across that nationality in the top 100
+				var currentCount = 0;
+				mensData.forEach(function(d){
+					currentCount = m.get(d.Nationality);
+					m.set(d.Nationality, currentCount + 1);
+					if(currentCount + 1 > max){
+						max = currentCount + 1;
+					}
+				})
+				colorScale = d3.scaleSequential(d3.interpolateBlues)
+						  .domain([0, max]);
+			}
+			
+			//append the path to the SVG to create the map.
+			svg.selectAll(".country")
+			   .data(mapData)
+			   .enter().append("path")
+			   .attr("d", path)
+			   .style("stroke", "black")
+				//fill the map with the color based on scale using the counts
+			   .style("fill", function(d) { return m.get(d.properties.name) ? colorScale(m.get(d.properties.name)) : "none"; });
+		}
+   </script>
+ 
+	<h1>3. Teammates Network (40 Points)</h1>
+	<div id="teammates"></div>
+	
+	<script>
+		function createTeammateMap(divId, mensData, teammateData){
+		
+			var mensNation = new Map();
+			var groupNumber = 0;
+			//populate mensData with the nationalities set to group 1
+			mensData.forEach(function(d){
+				mensNation.set(d.Nationality, groupNumber);
+			})
+			
+			//incremement the group numbers
+			mensNation.forEach(function(value, key){
+				value += groupNumber;
+				mensNation.set(key, value);
+				groupNumber++;
+			})
+			
+			//populate nodes array with names and group numbers
+			var nodes = [];
+			mensData.forEach(function(d){ 
+				nodes.push({
+					name: d.Name,
+					group: mensNation.get(d.Nationality)
+				});
+			});
+			
+			//populate links array with links between the teammates using nodes indices 
+			var links = [];
+			var firstDim = 0;
+			var secondDim = 0;
+			var sourceIndex = 0;
+			var targetIndex = 0;
+			teammateData.forEach(function (d){
+				for(var i = 0; i < nodes.length; i++){
+					secondDim = 0;
+					if(nodes[i].name == teammateData[firstDim][secondDim]){
+						sourceIndex = i;
+					}
+					secondDim = 1;
+					if(nodes[i].name == teammateData[firstDim][secondDim]){
+						targetIndex = i;
+					}
+				}
+				if(firstDim < 783){
+					firstDim++;
+				}
+				
+				links.push({
+					source: sourceIndex,
+					target: targetIndex
+				});
+				sourceIndex = 0;
+				targetIndex = 0;
+			})
+			
+			//define dimensions for SVG
+			var width = 600;
+			var height = 450;
+
+			//append the svg to the current div
+			var svg = d3.select(divId)
+				.append("svg")
+				.attr("width", width)
+				.attr("height", height);
+				
+			//define color scale - 15 is the default value should the individiual if statements not execute and reassign color scale based on their maxes.
+			var colorScale = d3.scaleOrdinal(d3.schemeCategory20);
+			
+			var simulation = d3.forceSimulation(nodes)
+				.force("link", d3.forceLink(links))
+				.force("charge", d3.forceManyBody())
+				.force("center", d3.forceCenter(width / 2, height / 2));
+			
+			
+			var link = svg.append("g")
+				.attr("class", "links")
+					.selectAll("line")
+					.data(links)
+				.enter().append("line")
+					.attr("stroke-width", 0.4);
+
+			var node = svg.selectAll(".nodes")
+				.data(nodes)
+				.enter().append("g")
+					.attr("class", "nodes")
+					.call(d3.drag()
+						.on("start", dragstarted)
+						.on("drag", dragged)
+						.on("end", dragended));
+						
+			node.append("circle")
+				.attr("r", 5)
+				.attr("fill", function(d) { return colorScale(d.group); });
+				
+			node.append("text")
+				.attr("dx", 12)
+				.attr("dy", ".35em")
+				.text(function(d) { return d.name; });
+				
+			simulation.nodes(nodes)
+				.on("tick", ticked);
+
+			simulation.force("link")
+				.links(links);
+
+			function ticked() {
+				link
+					.attr("x1", function(d) { return d.source.x; })
+					.attr("y1", function(d) { return d.source.y; })
+					.attr("x2", function(d) { return d.target.x; })
+					.attr("y2", function(d) { return d.target.y; });
+				node
+					.attr("transform", function(d){ return "translate(" + d.x + ", " + d.y  + ")"; })
+			  }
+			
+			function dragstarted(d) {
+			  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+			  d.fx = d.x;
+			  d.fy = d.y;
+			}
+
+			function dragged(d) {
+			  d.fx = d3.event.x;
+			  d.fy = d3.event.y;
+			}
+
+			function dragended(d) {
+			  if (!d3.event.active) simulation.alphaTarget(0);
+			  d.fx = null;
+			  d.fy = null;
+			}
+			
+			console.log(colorScale(5));
+			
+		}
+	</script>
+ 
+	<script type="text/javascript" src="a3.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

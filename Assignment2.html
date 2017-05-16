@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+ 
+<html lang = "en">
+    <head>
+        <title>Assignment 2</title>
+        <!-- Assignment 2 -->    
+        <!-- Stylization for the assignments -->
+        <style>
+            h1 {
+                font-size: 26px;
+            }
+        </style>
+        <!-- Link D3 -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.js"></script>
+        <!-- Link Refugees Array -->
+        <script src="http://www.cis.umassd.edu/~dkoop/cis468-2017sp/a2/us-refugees.js" type="text/javascript"></script>
+       
+    </head>
+    <body>
+        <h1>0. Info</h1>
+        <div id = "info">
+            Student Name: Nicholas Pavao<br>
+            Student ID: 01284583<br>
+            Data Visualization (CIS 468)<br>
+            Assignment 2<br>
+            This assignment is all my own work. I did not copy the code from any other source.<br>
+        </div>
+       
+        <h1>1. Bar Chart (30 Points)</h1>
+        <div id = "barchart">
+            <script type = "text/javascript">
+            //Create the totals array and save the year for x axis and total for y axis
+            var totals = [];
+            refugees.forEach(function getData(d){
+                totals.push({
+                    Year: d.Year,
+                    Total: d.Total
+                });
+            });
+           
+            //parse values just incase they aren't passed as integers even though they should be
+            totals.forEach(function(d){
+                d = +d;
+            });
+           
+            //define margin and size variables for svg
+            //padding is used to pad the bars for aesthetics
+            var margin = {top: 20, right: 20, bottom: 50, left: 80};
+            var width = 900;
+            var height = 330;
+            var padding = 2;
+           
+            //define the scale for x axis with range 0px to end of svg and domain of years
+            var xScale = d3.scaleBand()
+                            .range([0, (width - margin.left - margin.right)])
+                            .domain(totals.map(function (d){ return d.Year }))
+                            .padding(0.1);
+            //define the scale for y axis with range top of svg to bottom and domain 0 to the highest value in totals
+            var yScale = d3.scaleLinear()
+                            .range([height, 0])
+                            .domain([0, d3.max(totals, function(d) { return d.Total })]);
+           
+            //create the SVG with the previous variables
+            var svg = d3.select("body").selectAll("#barchart")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+           
+            /* select all rects (there are none yet) and append rects not yet added at positions
+             * based on their values in years and total with common width and heights based on hieght - value
+             */
+            svg.selectAll("rect")
+                .data(totals)
+                .enter()
+                .append("rect")
+                .attr("x", function(d){ return padding + xScale(d.Year); })
+                .attr("y", function(d){ return yScale(d.Total); })
+                .attr("width", xScale.bandwidth())
+                .attr("height", function(d){ return height - yScale(d.Total); })
+                .attr("fill", "LightCoral");
+           
+            //append a text element to the SVG as a title
+            svg.append("text")
+                .attr("x", (width / 3))
+                .attr("y", 20)
+                .attr("font-family", "Verdana")
+                .attr("font-size", 30)
+                .text("Refugee Data");
+               
+            //append a text element to the SVG as a label for the x axis
+            svg.append("text")
+                .attr("x", (width / 3))
+                .attr("y", 365)
+                .attr("font-family", "Verdana")
+                .text("Year");
+           
+            //append a text element to the SVG as a label for the y axis
+            svg.append("text")
+                .attr("x", -230)
+                .attr("y", -45)
+                .attr("font-family", "Verdana")
+                .attr("transform", "rotate(-90, 0, 0)")
+                .text("Refugee Count");
+           
+            /* append a group element where we call the axisBottom method of d3 for an x axis
+             * and tickValues to only display every 4th year in an effort to avoid cluttering
+             */
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(xScale)
+                    .tickValues(xScale.domain().filter(function(d, i) { return !(i % 4); })));
+ 
+            //same as the x axis but for y with tickFormat to format numbers like 200,000 to 200k and ticks to only show 10 ticks
+            svg.append("g")
+                .attr("class", "axis")
+                .call(d3.axisLeft(yScale)
+                    .ticks(10)
+                    .tickFormat(d3.formatPrefix(".0", 1e3)));
+            </script>
+        </div>
+       
+        <h1>2. Stacked Bar Chart (30 Points)</h1>
+        <div id = "stacked">
+            <script type = "text/javascript">
+                //define margin, width, height, and padding for the svg creation
+                var margin = {top: 20, right: 20, bottom: 50, left: 80};
+                var width = 800;
+                var height = 330;
+                var padding = 2;
+                //define totals array that stores just the totals
+                var totals = [];
+                refugees.forEach(function getData(d){
+                    totals.push(d.Total);
+                });
+               
+                //select the tag #stacked and append an SVG element with our defined dimensions
+                var svg = d3.select("#stacked").append("svg")
+                  .attr("width", width + margin.left + margin.right)
+                  .attr("height", height + margin.top + margin.bottom)
+                  .append("g") // add a group to translate everything according to margins
+                  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                 
+                var rectContainer = svg.append("g")
+               
+                //define x scale across the width of the svg from first to last year
+                var xScale = d3.scaleBand()
+                                .rangeRound([0, width]) //account for margins?
+                                .domain(refugees.map(function (d){ return d.Year }))
+                                .padding(0.1);
+                //define y scale across the height of the svg from 0 to the highest bar.
+                var yScale = d3.scaleLinear()
+                                .rangeRound([0, height])
+                                .domain([d3.max(totals), 0]);
+               
+                //define z scale to the 7 color palette range
+                var zScale = d3.scaleOrdinal()
+                    .range(["#000000", "#4d0000", "#800000", "#cc0000", "#ff1a1a", "#ff6666", "#ff9999"]);
+               
+                //define the keys from refugee that we want to associate to each color
+                var keys = ["Africa","Asia","Europe","Former Soviet Union","Kosovo","Latin America\/Caribbean", "Near East\/South Asia"];
+               
+                //associate those colors and keys with one another
+                zScale.domain(keys);
+               
+                //Append each rectangle for each key for each year based on previous rectangles and fill the respective color
+                rectContainer.append("g")
+                            .selectAll("g")
+                            .data(d3.stack().keys(keys)(refugees))
+                            .enter().append("g")
+                              .attr("fill", function(d) { return zScale(d.key); })
+                            .selectAll("rect")
+                            .data(function(d) { return d; })
+                            .enter().append("rect")
+                              .attr("x", function(d){ return xScale(d.data.Year); })
+                              .attr("y", function(d) { return yScale(d[1]); })
+                              .attr("height", function(d) { return yScale(d[0]) - yScale(d[1]); })
+                              .attr("width", xScale.bandwidth());
+                             
+                //append the x access with labels on every 4th year only
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xScale)
+                        .tickValues(xScale.domain().filter(function(d, i) { return !(i % 4); })));
+ 
+                //same as the x axis but for y with tickFormat to format numbers like 200,000 to 200k and ticks to only show 10 ticks
+                svg.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(yScale)
+                        .ticks(10)
+                        .tickFormat(d3.formatPrefix(".0", 1e3)));
+               
+                //append a text element to the SVG as a title
+                svg.append("text")
+                    .attr("x",  (width / 2) - 70)
+                    .attr("y", 20)
+                    .attr("font-family", "Verdana")
+                    .attr("font-size", 30)
+                    .text("Refugee Data");
+               
+                //append a text element to the SVG as a label for the x axis
+                svg.append("text")
+                    .attr("x", (width / 2) - 25)
+                    .attr("y", 365)
+                    .attr("font-family", "Verdana")
+                    .text("Year");
+               
+                //append a text element to the SVG as a label for the y axis
+                svg.append("text")
+                    .attr("x", -230)
+                    .attr("y", -45)
+                    .attr("font-family", "Verdana")
+                    .attr("transform", "rotate(-90, 0, 0)")
+                    .text("Refugee Count");
+               
+            </script>
+        </div>
+       
+        <h1>3. Line Chart (30 Points)</h1>
+        <div id = "linechart">
+            Region: <select name="region" onChange="updateLineChart(this.value)">
+            </select>
+            <script type="text/javascript">
+				//creat array countries and store the region names and total in it
+                var countries = Object.keys(refugees[0]).filter(function(k) { return k != "Year"; });
+                
+                //create the dropdown menu using countries array
+                d3.select("#linechart select")
+                    .selectAll("option").data(countries)
+                    .enter().append("option")
+                    .attr("value", function(d) { return d; })
+                    .text(function(d) { return d; });
+               
+                //define margin, width, height, and padding for the svg creation
+                var margin = {top: 20, right: 20, bottom: 50, left: 80};
+                var width = 800;
+                var height = 330;
+                var padding = 2;
+                //define totals array that stores just the totals
+                var totals = [];
+                refugees.forEach(function getData(d){
+                    totals.push(d.Total);
+                });
+               
+                //select the tag #linechart and append an SVG element with our defined dimensions
+                var svg = d3.select("#linechart").append("svg")
+                  .attr("width", width + margin.left + margin.right)
+                  .attr("height", height + margin.top + margin.bottom)
+                  .append("g") // add a group to translate everything according to margins
+                  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");				
+				
+                //define x scale across the width of the svg from first to last year
+                var xScale = d3.scaleBand()
+                                .rangeRound([0, width]) //account for margins?
+                                .domain(refugees.map(function (d){ return d.Year }))
+                                .padding(0.1);
+                //define y scale across the height of the svg from 0 to the highest bar.
+                var yScale = d3.scaleLinear()
+                                .rangeRound([0, height])
+                                .domain([d3.max(totals), 0]);
+			   
+			   //Create an array regionYear and push objects from refugees with Year and African refugee counts
+				var regionYear = [];
+				refugees.forEach(function collectArray(d){
+					regionYear.push({
+						Year: d.Year,
+						Region: d.Africa
+					});
+				});
+				
+				/* Create a line. Using the Africa count and Year on the scales gives us the pixel
+				 * location for x and y values for each point on the line. Curve cardinal is used
+				 * to curve the line so that it looks nice but it not necessary.
+				 */
+				var findPath = d3.line()
+					.x(function(d) { return xScale(d.Year); })
+					.y(function(d) { return yScale(d.Region); })
+					.curve(d3.curveCardinal);
+				
+				//append the path to the SVG element
+				var initialGraph = svg.append("path")
+									.attr("id", "line")
+									.attr("d", findPath(regionYear))
+									.attr("stroke", "#ff6370")
+									.attr("stroke-width", 2)
+									.attr("fill", "none");
+									
+				/* When onChange function is called we will refresh regionYear to empty and store the
+				 * objects from refugees containing the selected region and years
+				 */
+				function updateLineChart(selectedRegion){					
+					regionYear = [];
+					refugees.forEach(function collectArray(d){
+						regionYear.push({
+							Year: d.Year,
+							Region: d[selectedRegion]
+						});
+					});
+					
+					//select all of the id "line" and transition that line over 2 seconds to match the new regionYear path
+					svg.selectAll("#line")
+						.transition()
+						.duration(2000)
+							.attr("d", findPath(regionYear));
+				}
+			   
+                //append the x access with labels on every 4th year only
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xScale)
+                        .tickValues(xScale.domain().filter(function(d, i) { return !(i % 4); })));
+ 
+                //same as the x axis but for y with tickFormat to format numbers like 200,000 to 200k and ticks to only show 10 ticks
+                svg.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(yScale)
+                        .ticks(10)
+                        .tickFormat(d3.formatPrefix(".0", 1e3)));
+               
+                //append a text element to the SVG as a title
+                svg.append("text")
+                    .attr("x",  (width / 2) - 70)
+                    .attr("y", 20)
+                    .attr("font-family", "Verdana")
+                    .attr("font-size", 30)
+                    .text("Refugee Data");
+			   
+                //append a text element to the SVG as a label for the x axis
+                svg.append("text")
+                    .attr("x", (width / 2) - 25)
+                    .attr("y", 365)
+                    .attr("font-family", "Verdana")
+                    .text("Year");
+               
+                //append a text element to the SVG as a label for the y axis
+                svg.append("text")
+                    .attr("x", -230)
+                    .attr("y", -45)
+                    .attr("font-family", "Verdana")
+                    .attr("transform", "rotate(-90, 0, 0)")
+                    .text("Refugee Count");
+               
+            </script>
+           
+        </div>
+    </body>
+</html>

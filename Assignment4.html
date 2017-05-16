@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html lang="en">
+
+<head>
+    <title>Assignment 4</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 11pt;
+        }
+        
+        path.state-boundary {
+            stroke: #000;
+            stroke-width: .5px;
+        }
+
+        rect {
+            fill: #ff6262;
+            stroke: #000;
+            stroke-width: .5px;
+        }
+
+        .bar text {
+            font-size: 9pt;
+        }
+
+        #brushed svg {
+            padding: 10px;
+        }
+
+        .x.axis text {
+            transform: translate(-12px,10px) rotate(-90deg);
+            text-anchor: end;
+        }
+
+        .hideClass {
+            display: none;
+        }
+
+    </style>
+
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.7.4/d3.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.0/topojson.js"></script>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+
+    <h1>0. Info</h1>
+    <div id = "info">
+        Student Name: Nicholas Pavao<br>
+        Student ID: 01284583<br>
+        Data Visualization (CIS 468)<br>
+        Assignment 4<br>
+        This assignment is all my own work. I did not copy the code from any other source.<br>
+        I included and utilized the JQuery library<br>
+    </div> 
+
+    <h1>1. Comparing Years (40 Points)</h1>
+    <button id="startTransition1">Click Here to start the First Transition to 2016</button>
+    <button id="startTransition2" class="hideClass">Click Here to start the Second Transition to 2016</button>
+    <div id="bars"></div>
+
+    <h1>2. Comparing Occupations (50 Points)</h1>
+    <div id="brushed"></div>
+
+    <script type="text/javascript" src="a4.js"></script>
+</body>
+</html>
